@@ -67,7 +67,7 @@ async def links(interaction: discord.Interaction):
     )
     embed.add_field(name="📺 YouTube Channel", value="[Subscribe here](https://youtube.com/@xraygamerofficial?si=eIL7vfGoDm_kMYUz)", inline=False)
     embed.add_field(name="💬 Discord Server", value="[Join Discord](https://discord.gg/kqAF4WaZJK)", inline=False)
-    embed.add_field(name="📁 GitHub Repository", value="[Download Source](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub/releases/tag/v1.0.0)
+    embed.add_field(name="📁 GitHub Repository", value="[Download Source](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub/releases/tag/v1.0.0)"
     embed.set_thumbnail(url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
 
