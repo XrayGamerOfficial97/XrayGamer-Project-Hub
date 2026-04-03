@@ -1,9 +1,9 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import os
 # ⚠️ REPLACE THIS WITH YOUR NEW RESET TOKEN FROM DEVELOPER PORTAL
-TOKEN = 'MTQ4OTY1MzE0MzcxNjIzMzQyOQ.GgWIw5.TT697kIwF0XBuWfAFbBqt8O8iG9QNje2aoABPc' 
+TOKEN = os.environ.get('DISCORD_TOKEN')
 
 class XrayBot(commands.Bot):
     def __init__(self):
@@ -65,9 +65,9 @@ async def links(interaction: discord.Interaction):
         description="Access the latest tools and updates below:",
         color=discord.Color.blue()
     )
-    embed.add_field(name="📺 YouTube Channel", value="[Subscribe here](https://youtube.com/@XrayGamer)", inline=False)
+    embed.add_field(name="📺 YouTube Channel", value="[Subscribe here](https://youtube.com/@xraygamerofficial?si=eIL7vfGoDm_kMYUz)", inline=False)
     embed.add_field(name="💬 Discord Server", value="[Join Discord](https://discord.gg/kqAF4WaZJK)", inline=False)
-    embed.add_field(name="📁 GitHub Repository", value="[Download Source](https://github.com/XrayGamerOfficial/XrayGamer-Official-Hub)", inline=False)
+    embed.add_field(name="📁 GitHub Repository", value="[Download Source](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub/releases/tag/v1.0.0)
     embed.set_thumbnail(url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
 
