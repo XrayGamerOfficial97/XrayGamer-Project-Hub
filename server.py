@@ -76,7 +76,34 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-# ================= NEW: AUTO SETUP COMMAND (PRO BUILDER) =================
+# ================= NEW: ADMIN MONITORING COMMAND =================
+
+@bot.tree.command(name="admin_keys", description="Shiko të gjithë çelësat e gjeneruar (Vetëm Owner)")
+async def admin_keys(interaction: discord.Interaction):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("❌ Nuk ke leje për këtë komandë!", ephemeral=True)
+        return
+
+    # Rifreskojmë listën nga skedari për siguri
+    current_keys = load_keys()
+    
+    if not current_keys:
+        await interaction.response.send_message("📭 Nuk ka asnjë çelës të gjeneruar në databazë.", ephemeral=True)
+        return
+
+    mesazhi = "### 🔑 LISTA E LICENCAVE AKTIVE\n"
+    mesazhi += "--------------------------------------\n"
+    
+    for key, data in current_keys.items():
+        user = data.get("user", "Unknown")
+        hwid = data.get("hwid")
+        status = f"✅ **Bound:** `{hwid[:10]}...`" if hwid else "⏳ **Unused**"
+        mesazhi += f"**Key:** `{key}`\n👤 **User:** {user}\n🛡️ **Status:** {status}\n\n"
+
+    # E dërgojmë "ephemeral" që ta shohësh vetëm TI
+    await interaction.response.send_message(mesazhi, ephemeral=True)
+
+# ================= SERVER SETUP COMMAND =================
 
 @bot.tree.command(name="setup_pro_server", description="Build the entire professional server structure automatically")
 async def setup_pro_server(interaction: discord.Interaction):
@@ -87,7 +114,6 @@ async def setup_pro_server(interaction: discord.Interaction):
     await interaction.response.send_message("🛠️ Building Professional Server... Please wait.", ephemeral=True)
     guild = interaction.guild
 
-    # Permissions setups
     view_only = {
         guild.default_role: discord.PermissionOverwrite(send_messages=False, view_channel=True, read_message_history=True),
         guild.me: discord.PermissionOverwrite(send_messages=True, view_channel=True)
@@ -97,31 +123,27 @@ async def setup_pro_server(interaction: discord.Interaction):
         guild.me: discord.PermissionOverwrite(send_messages=True, view_channel=True)
     }
 
-    # Create Categories and Channels
     try:
-        # Category 1
         cat_info = await guild.create_category("🛰️ INFORMATION")
         await guild.create_text_channel("┃👋-welcome", category=cat_info, overwrites=view_only)
         await guild.create_text_channel("┃📜-rules", category=cat_info, overwrites=view_only)
         await guild.create_text_channel("┃📢-announcements", category=cat_info, overwrites=view_only)
         await guild.create_text_channel("┃✅-verify-here", category=cat_info, overwrites=view_only)
 
-        # Category 2
         cat_script = await guild.create_category("🚀 XRAY SCRIPT")
         await guild.create_text_channel("┃📂-download", category=cat_script, overwrites=view_only)
         await guild.create_text_channel("┃🔑-get-license", category=cat_script, overwrites=chat_allowed)
         await guild.create_text_channel("┃🆘-technical-support", category=cat_script, overwrites=chat_allowed)
 
-        # Category 3
         cat_comm = await guild.create_category("💬 COMMUNITY")
         await guild.create_text_channel("┃💬-general-chat", category=cat_comm, overwrites=chat_allowed)
         await guild.create_text_channel("┃📸-media-results", category=cat_comm, overwrites=chat_allowed)
 
-        await interaction.followup.send("✅ **SUCCESS:** Your professional server structure is ready!", ephemeral=True)
+        await interaction.followup.send("✅ **SUCCESS:** Server structure ready!", ephemeral=True)
     except Exception as e:
         await interaction.followup.send(f"❌ **ERROR:** {e}", ephemeral=True)
 
-# ================= EXISTING DISCORD COMMANDS (MOS I PREK) =================
+# ================= EXISTING COMMANDS =================
 
 @bot.event
 async def on_ready():
@@ -140,56 +162,36 @@ async def getkey(interaction: discord.Interaction):
             await interaction.response.send_message("❌ **Error:** You must be a **Subscriber** to get a key!", ephemeral=True)
             return
 
-    for k, v in active_keys.items():
+    # Rifreskojmë listën lokale para kontrollit
+    local_keys = load_keys()
+    for k, v in local_keys.items():
         if v.get("user_id") == interaction.user.id:
             await interaction.response.send_message(f"⚠️ You already have a key: `{k}`", ephemeral=True)
             return
 
     new_key = f"XRAY-{str(uuid.uuid4())[:8].upper()}"
-    active_keys[new_key] = {
+    local_keys[new_key] = {
         "user": str(interaction.user),
         "user_id": interaction.user.id,
         "hwid": None,
         "status": "active"
     }
-    save_keys(active_keys)
+    save_keys(local_keys)
+    active_keys.update(local_keys) # Update global memory
     
     msg = f"✅ **OWNER:** Your key: `{new_key}`" if interaction.user.id == OWNER_ID else f"✅ Your unique key: `{new_key}`"
     await interaction.response.send_message(msg, ephemeral=True)
 
-@bot.tree.command(name="rules", description="Show the official project rules and access guide")
+@bot.tree.command(name="rules", description="Show official project rules")
 async def rules(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="📜 XrayGamer Rules & Access Guide",
-        description="Follow these mandatory steps to activate your software session:",
-        color=discord.Color.gold()
-    )
-    embed.add_field(name="1️⃣ Subscriber Status", value="Subscribe to [YouTube](https://youtube.com/@xraygamerofficial) to get the role.", inline=False)
-    embed.add_field(name="2️⃣ Secure Download", value="Download from [GitHub](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub).", inline=False)
-    embed.add_field(name="3️⃣ Generate License", value="Use `/getkey` to get your key.", inline=False)
-    embed.add_field(name="⚠️ Security Warning", value="Sharing keys results in a **permanent hardware ban**.", inline=False)
-    
-    if bot.user.avatar:
-        embed.set_thumbnail(url=bot.user.avatar.url)
-    
-    embed.set_footer(text="XrayGamer Project Hub | Premium Edition 2026")
+    embed = discord.Embed(title="📜 XrayGamer Protocol", color=discord.Color.gold())
+    embed.add_field(name="Steps", value="Subscribe -> Verify -> Download -> Key.", inline=False)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="links", description="Official project links and download guide")
+@bot.tree.command(name="links", description="Official project links")
 async def links(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="🚀 XrayGamer Project Hub - Official Resources",
-        description="Visit the repository for the latest AI models and download links.",
-        color=discord.Color.blue()
-    )
-    embed.add_field(name="📺 YouTube", value="[Subscribe](https://youtube.com/@xraygamerofficial)", inline=True)
-    embed.add_field(name="💬 Discord", value="[Join Server](https://discord.gg/ZTzRKywZJd)", inline=True)
-    embed.add_field(name="📁 GitHub Repository", value="[Download & README](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub)", inline=False)
-    
-    if bot.user.avatar:
-        embed.set_thumbnail(url=bot.user.avatar.url)
-    
-    embed.set_footer(text="XrayGamer Official | © 2026")
+    embed = discord.Embed(title="🚀 Official Resources", color=discord.Color.blue())
+    embed.add_field(name="GitHub", value="[Repository](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub)", inline=False)
     await interaction.response.send_message(embed=embed)
 
 # Run Flask in background
