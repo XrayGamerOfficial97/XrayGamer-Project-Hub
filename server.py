@@ -136,7 +136,6 @@ async def admin_keys(interaction: discord.Interaction):
 
 @bot.tree.command(name="getkey", description="Generate your unique installation key")
 async def getkey(interaction: discord.Interaction):
-    # Owner always gets a key, others need Subscriber role
     if interaction.user.id != OWNER_ID:
         role = discord.utils.get(interaction.guild.roles, name="Subscriber")
         if role not in interaction.user.roles:
@@ -166,12 +165,22 @@ async def getkey(interaction: discord.Interaction):
 async def on_ready():
     print(f'🚀 Bot Online: {bot.user}')
     await bot.tree.sync()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="GitHub | /getkey"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="GitHub | /links"))
 
 @bot.tree.command(name="links", description="Show official project links")
 async def links(interaction: discord.Interaction):
-    embed = discord.Embed(title="🚀 Official Resources", color=discord.Color.blue())
-    embed.add_field(name="GitHub", value="[Repository](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub)", inline=False)
+    embed = discord.Embed(title="🚀 XrayGamer Official Resources", color=discord.Color.blue())
+    
+    # Linku i GitHub
+    embed.add_field(name="📁 GitHub", value="[Repository](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub)", inline=False)
+    
+    # Linku i YouTube (I RI)
+    embed.add_field(name="🎥 YouTube", value="[Official Channel](https://youtube.com/@xraygamerofficial?si=O-gcrKKFQ2WlXypR)", inline=False)
+    
+    # Linku i Download (I RI)
+    embed.add_field(name="📥 Download", value="[Google Drive Link](https://drive.google.com/file/d/1b4-7trPriu49TMET8Si-oucpDUUJDXPQ/view?usp=sharing)", inline=False)
+    
+    embed.set_footer(text="Precision in every line of code.")
     await interaction.response.send_message(embed=embed)
 
 # Run Flask & Bot
