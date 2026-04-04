@@ -20,7 +20,6 @@ class XrayBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        # Kjo sinkronizon komandat globalisht kur boti niset
         try:
             synced = await self.tree.sync()
             print(f"✅ Slash commands synchronized: {len(synced)} commands found.")
@@ -29,7 +28,7 @@ class XrayBot(commands.Bot):
 
 bot = XrayBot()
 
-# --- KEY PERSISTENCE ---
+# --- KEY PERSISTENCE (MOS E PREK) ---
 def load_keys():
     if os.path.exists(KEYS_FILE):
         with open(KEYS_FILE, "r") as f:
@@ -45,7 +44,7 @@ def save_keys(keys):
 
 active_keys = load_keys()
 
-# ================= FLASK AUTH SERVER (FOR LAUNCHER) =================
+# ================= FLASK AUTH SERVER (PER LAUNCHER - MOS E PREK) =================
 app = Flask('')
 
 @app.route('/')
@@ -77,12 +76,56 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-# ================= DISCORD COMMANDS =================
+# ================= NEW: AUTO SETUP COMMAND (PRO BUILDER) =================
+
+@bot.tree.command(name="setup_pro_server", description="Build the entire professional server structure automatically")
+async def setup_pro_server(interaction: discord.Interaction):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("❌ Only the Owner can use this!", ephemeral=True)
+        return
+
+    await interaction.response.send_message("🛠️ Building Professional Server... Please wait.", ephemeral=True)
+    guild = interaction.guild
+
+    # Permissions setups
+    view_only = {
+        guild.default_role: discord.PermissionOverwrite(send_messages=False, view_channel=True, read_message_history=True),
+        guild.me: discord.PermissionOverwrite(send_messages=True, view_channel=True)
+    }
+    chat_allowed = {
+        guild.default_role: discord.PermissionOverwrite(send_messages=True, view_channel=True, read_message_history=True, attach_files=True),
+        guild.me: discord.PermissionOverwrite(send_messages=True, view_channel=True)
+    }
+
+    # Create Categories and Channels
+    try:
+        # Category 1
+        cat_info = await guild.create_category("🛰️ INFORMATION")
+        await guild.create_text_channel("┃👋-welcome", category=cat_info, overwrites=view_only)
+        await guild.create_text_channel("┃📜-rules", category=cat_info, overwrites=view_only)
+        await guild.create_text_channel("┃📢-announcements", category=cat_info, overwrites=view_only)
+        await guild.create_text_channel("┃✅-verify-here", category=cat_info, overwrites=view_only)
+
+        # Category 2
+        cat_script = await guild.create_category("🚀 XRAY SCRIPT")
+        await guild.create_text_channel("┃📂-download", category=cat_script, overwrites=view_only)
+        await guild.create_text_channel("┃🔑-get-license", category=cat_script, overwrites=chat_allowed)
+        await guild.create_text_channel("┃🆘-technical-support", category=cat_script, overwrites=chat_allowed)
+
+        # Category 3
+        cat_comm = await guild.create_category("💬 COMMUNITY")
+        await guild.create_text_channel("┃💬-general-chat", category=cat_comm, overwrites=chat_allowed)
+        await guild.create_text_channel("┃📸-media-results", category=cat_comm, overwrites=chat_allowed)
+
+        await interaction.followup.send("✅ **SUCCESS:** Your professional server structure is ready!", ephemeral=True)
+    except Exception as e:
+        await interaction.followup.send(f"❌ **ERROR:** {e}", ephemeral=True)
+
+# ================= EXISTING DISCORD COMMANDS (MOS I PREK) =================
 
 @bot.event
 async def on_ready():
     print(f'🚀 XrayGamer Bot is ONLINE as {bot.user}')
-    # Detyrojmë sinkronizimin edhe njëherë kur boti është gati
     await bot.tree.sync()
     await bot.change_presence(activity=discord.Activity(
         type=discord.ActivityType.watching, 
