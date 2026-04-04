@@ -1,48 +1,45 @@
-# 🛡️ XrayGamer Official Performance Hub
+# 🚀 XrayGamer Project Hub (2026 Edition)
+**Advanced AI-Powered Game Assistant & Neural Network Integration**
 
-![Status](https://img.shields.io/badge/Status-Undetected-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
-![Security](https://img.shields.io/badge/Antivirus-Verified-success)
+![Version](https://img.shields.io/badge/Version-1.0.0--Stable-blue)
+![Python](https://img.shields.io/badge/Python-3.12-yellow)
+![Status](https://img.shields.io/badge/Status-Tested--Working--2026-brightgreen)
 
-Welcome to the official repository for **XrayGamer**. This project provides high-performance system utilities and security monitoring for competitive PC gaming environments.
-
----
-
-### 🚀 Key Project Features
-* **FPS Optimization:** Fine-tuned for minimal latency and maximum frame rates.
-* **Security Monitor:** Real-time tracking of tool status and game compatibility.
-* **Clean Code Architecture:** Developed to run smoothly without system conflicts.
-* **24/7 Community Bot:** Integrated Discord support for instant updates.
+XrayGamer Project Hub is a high-performance utility designed to enhance real-time gaming experiences using custom-trained Neural Networks and Computer Vision (YOLOv8). 
 
 ---
 
-### 📥 Installation & Setup
-1. **Visit Releases:** Go to the [Releases](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub/releases) section on the right.
-2. **Download:** Get the latest `XrayGamer_Utility_v1.zip` package.
-3. **Extract:** Unzip the folder to your preferred location.
-4. **Launch:** Run the application as **Administrator** to enable performance hooks.
-5. **Activate:** Join our Discord to receive your community access key.
+## 💎 Key Features
+* **Neural Processing Unit:** Real-time object detection and image recognition utilizing advanced computer vision.
+* **Hardware-Locked Security (HWID):** Integrated protection system ensuring individual license integrity.
+* **Optimized Execution:** Engineered for the 2026 gaming landscape with high-frequency processing and minimal latency.
+* **Discord Licensing System:** Seamless authentication connected directly to our Discord community.
+* **Modern UI:** Professional dark-themed interface built with the CustomTkinter framework.
 
 ---
 
-### ✅ Security & Reliability
-> **Verified Clean:** Our utility is built with transparency. It is recognized as safe by most modern security providers and does **not** trigger false positive alerts. You can run XrayGamer with confidence while your protection is active.
+## 🛠️ Implementation Guide
+1.  **Download:** Clone the repository or download the latest release package.
+2.  **Extraction:** Extract all files to a local directory (e.g., Desktop) before execution.
+3.  **Authentication:** Launch the primary executable: `XrayGamer_Discord_V1.exe`.
+4.  **License Key:** Obtain your unique Subscriber Key from the official Discord server.
+5.  **Initialize:** Input your credentials and select **Login & Start** to begin the session.
 
 ---
 
-### 🔗 Official Links & Support
-| Platform | Resource Link |
-| :--- | :--- |
-| 📺 **YouTube** | [XrayGamer Official Channel](https://www.youtube.com/@XrayGamerofficial) |
-| 💬 **Discord** | [Join Community Support](https://discord.gg/kqAF4WaZJK) |
-| 📂 **Source/Updates** | [GitHub Repository Hub](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub) |
+## 🛡️ License & Terms of Use
+This software is developed for educational and research purposes within the fields of AI, Neural Networks, and Image Processing.
+* **Single Device Policy:** All licenses are strictly bound to a single HWID.
+* **Compliance:** Users are responsible for adhering to the terms of service of individual platforms.
+* **Updates:** Continuous support and patches are provided via our official community channels.
 
 ---
 
-### 🛠️ Developer Notes
-* **Language:** Python 3.12+
-* **Framework:** Discord.py (Backend Bot)
-* **Hosting:** 24/7 Uptime via Railway Cloud Services
+## 📢 Community & Support
+Connect with our community for access keys, documentation, and the latest neural model updates:
+
+[ ![Discord](https://img.shields.io/badge/Discord-Join%20Our%20Server-7289DA?style=for-the-badge&logo=discord) ](YOUR_DISCORD_LINK_HERE)
+[ ![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?style=for-the-badge&logo=youtube) ](YOUR_YOUTUBE_LINK_HERE)
 
 ---
-*© 2026 XrayGamerOfficial. Designed for educational and system-monitoring purposes. Play fair and respect the gaming community.*
+*Copyright © 2026 XrayGamer Team. All rights reserved.*
