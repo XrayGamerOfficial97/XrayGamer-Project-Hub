@@ -45,7 +45,7 @@ This software is provided for educational and utility purposes within the XrayGa
 Stay updated with the latest AI models and patches:
 
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=for-the-badge&logo=youtube)](https://youtube.com/@xraygamerofficial)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-7289DA?style=for-the-badge&logo=discord)](YOUR_DISCORD_LINK_HERE)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-7289DA?style=for-the-badge&logo=discord)](https://discord.gg/ZTzRKywZJd)
 
 ---
 *Developed by **XrayGamer Official** | © 2026 All Rights Reserved.*
