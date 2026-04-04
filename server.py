@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import os
+import json
 # ⚠️ REPLACE THIS WITH YOUR NEW RESET TOKEN FROM DEVELOPER PORTAL
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
@@ -18,7 +19,21 @@ class XrayBot(commands.Bot):
         print(f"✅ Slash commands synchronized!")
 
 bot = XrayBot()
+# Emri i skedarit ku do ruhen kodet
+KEYS_FILE = "keys.json"
 
+def load_keys():
+    if os.path.exists(KEYS_FILE):
+        with open(KEYS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_keys(keys):
+    with open(KEYS_FILE, "w") as f:
+        json.dump(keys, f, indent=4)
+
+# Ngarko kodet ekzistuese në memorie
+active_keys = load_keys()
 @bot.event
 async def on_ready():
     print(f'🚀 XrayGamer Bot is ONLINE as {bot.user}')
@@ -80,5 +95,31 @@ async def help(interaction: discord.Interaction):
         "3️⃣ **Unlock:** Get the installation key in `#password-vault` after verification."
     )
     await interaction.response.send_message(help_text, ephemeral=True)
+@bot.tree.command(name="getkey", description="Get your unique installation key (Subscribers only)")
+async def getkey(interaction: discord.Interaction):
+    import uuid
+    
+    # Kontrollojmë nëse ka rolin fiks "Subscriber"
+    role = discord.utils.get(interaction.guild.roles, name="Subscriber")
+    
+    if role not in interaction.user.roles:
+        await interaction.response.send_message("❌ **Error:** You must be a **Subscriber** to get a key!", ephemeral=True)
+        return
 
+    # Kontrollojmë nëse ka marrë kod më parë
+    for k, v in active_keys.items():
+        if v.get("user_id") == interaction.user.id:
+            await interaction.response.send_message(f"⚠️ You already have a key: `{k}`", ephemeral=True)
+            return
+
+    # Gjenerojmë kodin e ri
+    new_key = f"XRAY-{str(uuid.uuid4())[:8].upper()}"
+    active_keys[new_key] = {
+        "user": str(interaction.user),
+        "user_id": interaction.user.id,
+        "hwid": None,
+        "status": "active"
+    }
+    save_keys(active_keys)
+    await interaction.response.send_message(f"✅ Your unique key is: `{new_key}`\nKeep it safe!", ephemeral=True)
 bot.run(TOKEN)
