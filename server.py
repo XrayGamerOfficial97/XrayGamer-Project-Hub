@@ -20,8 +20,12 @@ class XrayBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        await self.tree.sync()
-        print(f"✅ Slash commands synchronized globally!")
+        # Kjo sinkronizon komandat globalisht kur boti niset
+        try:
+            synced = await self.tree.sync()
+            print(f"✅ Slash commands synchronized: {len(synced)} commands found.")
+        except Exception as e:
+            print(f"❌ Failed to sync commands: {e}")
 
 bot = XrayBot()
 
@@ -57,13 +61,11 @@ def check_key():
         return jsonify({"status": "error", "message": "Missing parameters!"}), 400
     
     if key in active_keys:
-        # Hardware Lock on first use
         if active_keys[key]['hwid'] is None:
             active_keys[key]['hwid'] = hwid
             save_keys(active_keys)
             return jsonify({"status": "success", "message": "Key bound to your hardware!"})
         
-        # HWID Verification
         if active_keys[key]['hwid'] == hwid:
             return jsonify({"status": "success", "message": "Access Granted!"})
         else:
@@ -80,9 +82,11 @@ def run_flask():
 @bot.event
 async def on_ready():
     print(f'🚀 XrayGamer Bot is ONLINE as {bot.user}')
+    # Detyrojmë sinkronizimin edhe njëherë kur boti është gati
+    await bot.tree.sync()
     await bot.change_presence(activity=discord.Activity(
         type=discord.ActivityType.watching, 
-        name="GitHub | /links"
+        name="GitHub | /rules"
     ))
 
 @bot.tree.command(name="getkey", description="Generate your unique installation key")
@@ -109,6 +113,24 @@ async def getkey(interaction: discord.Interaction):
     
     msg = f"✅ **OWNER:** Your key: `{new_key}`" if interaction.user.id == OWNER_ID else f"✅ Your unique key: `{new_key}`"
     await interaction.response.send_message(msg, ephemeral=True)
+
+@bot.tree.command(name="rules", description="Show the official project rules and access guide")
+async def rules(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="📜 XrayGamer Rules & Access Guide",
+        description="Follow these mandatory steps to activate your software session:",
+        color=discord.Color.gold()
+    )
+    embed.add_field(name="1️⃣ Subscriber Status", value="Subscribe to [YouTube](https://youtube.com/@xraygamerofficial) to get the role.", inline=False)
+    embed.add_field(name="2️⃣ Secure Download", value="Download from [GitHub](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub).", inline=False)
+    embed.add_field(name="3️⃣ Generate License", value="Use `/getkey` to get your key.", inline=False)
+    embed.add_field(name="⚠️ Security Warning", value="Sharing keys results in a **permanent hardware ban**.", inline=False)
+    
+    if bot.user.avatar:
+        embed.set_thumbnail(url=bot.user.avatar.url)
+    
+    embed.set_footer(text="XrayGamer Project Hub | Premium Edition 2026")
+    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="links", description="Official project links and download guide")
 async def links(interaction: discord.Interaction):
