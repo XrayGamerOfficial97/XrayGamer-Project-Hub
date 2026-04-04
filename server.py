@@ -4,6 +4,8 @@ from discord.ext import commands
 import os
 import json
 import uuid
+from flask import Flask, request, jsonify
+import threading
 
 # Merr Tokenin nga Railway
 TOKEN = os.environ.get('DISCORD_TOKEN')
@@ -22,7 +24,6 @@ class XrayBot(commands.Bot):
 bot = XrayBot()
 KEYS_FILE = "keys.json"
 
-# Funksionet e bazës së të dhënave
 def load_keys():
     if os.path.exists(KEYS_FILE):
         with open(KEYS_FILE, "r") as f:
@@ -38,6 +39,35 @@ def save_keys(keys):
 
 active_keys = load_keys()
 
+# ================= SERVERI PER LAUNCHERIN (FLASK) =================
+app = Flask('')
+
+@app.route('/check_key', methods=['GET'])
+def check_key():
+    key = request.args.get('key')
+    hwid = request.args.get('hwid')
+    
+    if key in active_keys:
+        # Lidhja e HWID per here te pare
+        if active_keys[key]['hwid'] is None:
+            active_keys[key]['hwid'] = hwid
+            save_keys(active_keys)
+            return jsonify({"status": "success", "message": "Key linked to your PC!"})
+        
+        # Verifikimi i HWID
+        if active_keys[key]['hwid'] == hwid:
+            return jsonify({"status": "success", "message": "Access Granted!"})
+        else:
+            return jsonify({"status": "error", "message": "Key already used on another PC!"})
+            
+    return jsonify({"status": "error", "message": "Invalid Key!"})
+
+def run_flask():
+    # Railway perdor porten 8080 automatikisht
+    app.run(host='0.0.0.0', port=8080)
+
+# ================= KOMANDAT E DISCORD =================
+
 @bot.event
 async def on_ready():
     print(f'🚀 XrayGamer Bot is ONLINE as {bot.user}')
@@ -45,35 +75,6 @@ async def on_ready():
         type=discord.ActivityType.watching, 
         name="PUBG Utility | /status"
     ))
-
-@bot.event
-async def on_member_join(member):
-    channel = discord.utils.get(member.guild.text_channels, name="verify-here")
-    if channel:
-        welcome_embed = discord.Embed(
-            title="Welcome to XrayGamer Official Hub! 🚀",
-            description=(
-                f"Hello {member.mention}, to unlock the **PUBG Script**:\n\n"
-                "1️⃣ Go to our YouTube channel.\n"
-                "2️⃣ Subscribe and take a screenshot.\n"
-                "3️⃣ Upload the screenshot in this channel."
-            ),
-            color=discord.Color.blue()
-        )
-        await channel.send(embed=welcome_embed)
-
-@bot.tree.command(name="status", description="Check the PUBG Script safety status")
-async def status(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="📊 XrayGamer Security Monitor", 
-        description="Real-time status for PUBG Utility v1.0.0",
-        color=discord.Color.green()
-    )
-    embed.add_field(name="🛡️ Script Status", value="✅ **UNDETECTED**", inline=True)
-    embed.add_field(name="🌐 Server Connection", value="✅ **STABLE**", inline=True)
-    embed.add_field(name="📅 Last Update", value="April 2026", inline=False)
-    embed.set_footer(text="Verified by XrayGamer Development Team")
-    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="getkey", description="Get your unique installation key")
 async def getkey(interaction: discord.Interaction):
@@ -99,20 +100,10 @@ async def getkey(interaction: discord.Interaction):
     }
     save_keys(active_keys)
     
-    msg = f"✅ Hello **OWNER**! Your unique key is: `{new_key}`" if interaction.user.id == OWNER_ID else f"✅ Your unique key is: `{new_key}`\nKeep it safe!"
+    msg = f"✅ Hello **OWNER**! Your key: `{new_key}`" if interaction.user.id == OWNER_ID else f"✅ Your key: `{new_key}`"
     await interaction.response.send_message(msg, ephemeral=True)
 
-@bot.tree.command(name="links", description="Get official XrayGamer project links")
-async def links(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="🔗 Official Project Links", 
-        description="Access the latest tools and updates below:",
-        color=discord.Color.blue()
-    )
-    embed.add_field(name="📺 YouTube Channel", value="[Subscribe here](https://youtube.com/@xraygamerofficial?si=eIL7vfGoDm_kMYUz)", inline=False)
-    embed.add_field(name="💬 Discord Server", value="[Join Discord](https://discord.gg/kqAF4WaZJK)", inline=False)
-    embed.add_field(name="📂 GitHub Repository", value="[Download Source](https://github.com/XrayGamerOfficial97/XrayGamer-Project-Hub/releases/tag/v1.0.0)", inline=False)
-    embed.set_thumbnail(url=bot.user.display_avatar.url)
-    await interaction.response.send_message(embed=embed)
+# Nis serverin Flask ne nje "thread" tjeter qe te mos bllokoje botin
+threading.Thread(target=run_flask).start()
 
 bot.run(TOKEN)
