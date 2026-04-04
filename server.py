@@ -3,7 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 import os
 import json
-# ⚠️ REPLACE THIS WITH YOUR NEW RESET TOKEN FROM DEVELOPER PORTAL
+import uuid
+
+# Merr Tokenin nga Railway
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
 class XrayBot(commands.Bot):
@@ -14,30 +16,31 @@ class XrayBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        # This syncs the /commands with Discord
         await self.tree.sync()
         print(f"✅ Slash commands synchronized!")
 
 bot = XrayBot()
-# Emri i skedarit ku do ruhen kodet
 KEYS_FILE = "keys.json"
 
+# Funksionet e bazës së të dhënave
 def load_keys():
     if os.path.exists(KEYS_FILE):
         with open(KEYS_FILE, "r") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except:
+                return {}
     return {}
 
 def save_keys(keys):
     with open(KEYS_FILE, "w") as f:
         json.dump(keys, f, indent=4)
 
-# Ngarko kodet ekzistuese në memorie
 active_keys = load_keys()
+
 @bot.event
 async def on_ready():
     print(f'🚀 XrayGamer Bot is ONLINE as {bot.user}')
-    # Set a professional "Watching" status
     await bot.change_presence(activity=discord.Activity(
         type=discord.ActivityType.watching, 
         name="PUBG Utility | /status"
@@ -45,7 +48,6 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-    # Auto-welcome message in English when someone joins
     channel = discord.utils.get(member.guild.text_channels, name="verify-here")
     if channel:
         welcome_embed = discord.Embed(
@@ -73,6 +75,33 @@ async def status(interaction: discord.Interaction):
     embed.set_footer(text="Verified by XrayGamer Development Team")
     await interaction.response.send_message(embed=embed)
 
+@bot.tree.command(name="getkey", description="Get your unique installation key")
+async def getkey(interaction: discord.Interaction):
+    OWNER_ID = 1386797649532948570 
+    
+    if interaction.user.id != OWNER_ID:
+        role = discord.utils.get(interaction.guild.roles, name="Subscriber")
+        if role not in interaction.user.roles:
+            await interaction.response.send_message("❌ **Error:** You must be a **Subscriber** to get a key!", ephemeral=True)
+            return
+
+    for k, v in active_keys.items():
+        if v.get("user_id") == interaction.user.id:
+            await interaction.response.send_message(f"⚠️ You already have a key: `{k}`", ephemeral=True)
+            return
+
+    new_key = f"XRAY-{str(uuid.uuid4())[:8].upper()}"
+    active_keys[new_key] = {
+        "user": str(interaction.user),
+        "user_id": interaction.user.id,
+        "hwid": None,
+        "status": "active"
+    }
+    save_keys(active_keys)
+    
+    msg = f"✅ Hello **OWNER**! Your unique key is: `{new_key}`" if interaction.user.id == OWNER_ID else f"✅ Your unique key is: `{new_key}`\nKeep it safe!"
+    await interaction.response.send_message(msg, ephemeral=True)
+
 @bot.tree.command(name="links", description="Get official XrayGamer project links")
 async def links(interaction: discord.Interaction):
     embed = discord.Embed(
@@ -86,40 +115,4 @@ async def links(interaction: discord.Interaction):
     embed.set_thumbnail(url=bot.user.display_avatar.url)
     await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="help", description="How to use the XrayGamer Hub")
-async def help(interaction: discord.Interaction):
-    help_text = (
-        "**Quick Start Guide:**\n"
-        "1️⃣ **Download:** Get the files from GitHub via `/links`.\n"
-        "2️⃣ **Verify:** Post your sub-proof in `#verify-here`.\n"
-        "3️⃣ **Unlock:** Get the installation key in `#password-vault` after verification."
-    )
-    await interaction.response.send_message(help_text, ephemeral=True)
-@bot.tree.command(name="getkey", description="Get your unique installation key (Subscribers only)")
-async def getkey(interaction: discord.Interaction):
-    import uuid
-    
-    # Kontrollojmë nëse ka rolin fiks "Subscriber"
-    role = discord.utils.get(interaction.guild.roles, name="Subscriber")
-    
-    if role not in interaction.user.roles:
-        await interaction.response.send_message("❌ **Error:** You must be a **Subscriber** to get a key!", ephemeral=True)
-        return
-
-    # Kontrollojmë nëse ka marrë kod më parë
-    for k, v in active_keys.items():
-        if v.get("user_id") == interaction.user.id:
-            await interaction.response.send_message(f"⚠️ You already have a key: `{k}`", ephemeral=True)
-            return
-
-    # Gjenerojmë kodin e ri
-    new_key = f"XRAY-{str(uuid.uuid4())[:8].upper()}"
-    active_keys[new_key] = {
-        "user": str(interaction.user),
-        "user_id": interaction.user.id,
-        "hwid": None,
-        "status": "active"
-    }
-    save_keys(active_keys)
-    await interaction.response.send_message(f"✅ Your unique key is: `{new_key}`\nKeep it safe!", ephemeral=True)
 bot.run(TOKEN)
