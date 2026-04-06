@@ -73,15 +73,18 @@ def check_key():
     keys = load_keys()
     
     if key in keys:
+        # Kontrolli i Statusit (Nëse është i bllokuar nga Admini)
         if keys[key].get("status") == "disabled":
             return jsonify({"status": "error", "message": "License Blocked by Admin!"}), 403
 
+        # 1. Kontrolli i Skadimit (Trial Check)
         expires_at = keys[key].get("expires_at", "never")
         if expires_at != "never":
             expiry_date = datetime.datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S")
             if datetime.datetime.now() > expiry_date:
                 return jsonify({"status": "error", "message": "License Expired!"}), 403
 
+        # 2. Kontrolli i HWID (Hardware Lock)
         if keys[key]['hwid'] is None:
             keys[key]['hwid'] = hwid
             save_keys(keys)
@@ -216,5 +219,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="/getkey"))
 
 if __name__ == "__main__":
+    # Nis serverin Auth në një thread tjetër
     threading.Thread(target=run_flask, daemon=True).start()
+    # Nis botin e Discordit
     bot.run(TOKEN)
