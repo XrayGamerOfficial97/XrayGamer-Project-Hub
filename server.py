@@ -9,10 +9,10 @@ from flask import Flask, request, jsonify
 import threading
 
 # --- KONFIGURIMI I SISTEMIT ---
-TOKEN = os.environ.get('DISCORD_TOKEN') 
+TOKEN = os.environ.get('DISCORD_TOKEN') # Merret nga Environment Variables të Hosting-ut
 OWNER_ID = 1386797649532948570 
 KEYS_FILE = "keys.json"
-file_lock = threading.Lock()
+file_lock = threading.Lock() # Parandalon korruptimin e databazës kur ka shumë kërkesa
 
 class XrayBot(commands.Bot):
     def __init__(self):
@@ -48,19 +48,12 @@ def save_keys(keys):
             json.dump(keys, f, indent=4)
 
 # ================= SERVERI AUTH (FLASK API) =================
+# Ky server shërben për të vërtetuar licencën kur hapet programi .EXE
 app = Flask('')
 
 @app.route('/')
 def home():
     return "XrayGamer Global Auth Server is Online."
-
-# ENDPOINT I RI PËR PROGRAMIN E RI (UPDATE CHECK)
-@app.route('/check_update', methods=['GET'])
-def check_update():
-    return jsonify({
-        "version": "1.0.0",
-        "url": "https://drive.google.com/file/d/1b4-7trPriu49TMET8Si-oucpDUUJDXPQ/view?usp=sharing"
-    })
 
 @app.route('/check_key', methods=['GET'])
 def check_key():
@@ -88,18 +81,10 @@ def check_key():
         if keys[key]['hwid'] is None:
             keys[key]['hwid'] = hwid
             save_keys(keys)
-            return jsonify({
-                "status": "success", 
-                "message": "Hardware Bound Successfully!",
-                "discord_name": keys[key].get("user", "Gamer")
-            })
+            return jsonify({"status": "success", "message": "Hardware Bound Successfully!"})
         
         if keys[key]['hwid'] == hwid:
-            return jsonify({
-                "status": "success", 
-                "message": "Access Granted!",
-                "discord_name": keys[key].get("user", "Gamer")
-            })
+            return jsonify({"status": "success", "message": "Access Granted!"})
         else:
             return jsonify({"status": "error", "message": "HWID Mismatch! Key used on another PC."}), 401
             
@@ -114,15 +99,18 @@ def run_flask():
 @bot.tree.command(name="getkey", description="Generate your unique 2-hour Trial key")
 async def getkey(interaction: discord.Interaction):
     local_keys = load_keys()
+    
+    # Mbrojtja: Mos lejo të marrin më shumë se 1 çelës për llogari
     for k, v in local_keys.items():
         if v.get("user_id") == interaction.user.id:
             return await interaction.response.send_message(f"⚠️ You already have a key linked to this account: `{k}`", ephemeral=True)
 
+    # Gjenerimi i çelësit Trial (2 orë)
     new_key = f"XRAY-{str(uuid.uuid4())[:8].upper()}"
     expiry_time = (datetime.datetime.now() + datetime.timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")
 
     local_keys[new_key] = {
-        "user": interaction.user.display_name,
+        "user": str(interaction.user),
         "user_id": interaction.user.id,
         "hwid": None,
         "status": "active",
@@ -182,6 +170,8 @@ async def admin_keys(interaction: discord.Interaction):
     
     await interaction.response.send_message(msg, ephemeral=True)
 
+# --- KOMANDAT E REJA TË SHTUARA (ADMIN ONLY) ---
+
 @bot.tree.command(name="admin_reset_key", description="Reset HWID for a specific key (Admin Only)")
 async def admin_reset_key(interaction: discord.Interaction, key_name: str):
     if interaction.user.id != OWNER_ID:
@@ -191,7 +181,7 @@ async def admin_reset_key(interaction: discord.Interaction, key_name: str):
     if key_name in local_keys:
         local_keys[key_name]['hwid'] = None
         save_keys(local_keys)
-        await interaction.response.send_message(f"🔄 HWID reset for key `{key_name}`.", ephemeral=True)
+        await interaction.response.send_message(f"🔄 HWID reset for key `{key_name}`. User can now link a new PC.", ephemeral=True)
     else:
         await interaction.response.send_message("❌ Key not found.", ephemeral=True)
 
@@ -208,16 +198,19 @@ async def admin_manage_key(interaction: discord.Interaction, key_name: str, acti
     if key_name in local_keys:
         local_keys[key_name]['status'] = action.value
         save_keys(local_keys)
-        status_text = "ENABLED" if action.value == "active" else "DISABLED"
+        status_text = "ENABLED" if action.value == "active" else "DISABLED/CLOSED"
         await interaction.response.send_message(f"⚙️ Key `{key_name}` is now **{status_text}**.", ephemeral=True)
     else:
         await interaction.response.send_message("❌ Key not found.", ephemeral=True)
+
+# ================= EVENTS =================
 
 @bot.event
 async def on_ready():
     print(f'🚀 XrayGamer Bot Online: {bot.user}')
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="/getkey"))
 
+# NISJA E SERVERIT DHE BOTIT
 if __name__ == "__main__":
     # Nis serverin Auth në një thread tjetër
     threading.Thread(target=run_flask, daemon=True).start()
