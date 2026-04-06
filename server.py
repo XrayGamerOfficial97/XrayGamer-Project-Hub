@@ -66,6 +66,10 @@ def check_key():
     keys = load_keys()
     
     if key in keys:
+        # Kontrolli i Statusit (Nëse është i bllokuar nga Admini)
+        if keys[key].get("status") == "disabled":
+            return jsonify({"status": "error", "message": "License Blocked by Admin!"}), 403
+
         # 1. Kontrolli i Skadimit (Trial Check)
         expires_at = keys[key].get("expires_at", "never")
         if expires_at != "never":
@@ -158,12 +162,46 @@ async def admin_keys(interaction: discord.Interaction):
 
     msg = "### 🔑 LICENSE LIST\n"
     for k, v in keys.items():
-        status = "✅ Bound" if v['hwid'] else "⏳ Unused"
+        status_icon = "🛑" if v.get("status") == "disabled" else "✅"
+        hwid_status = "Bound" if v['hwid'] else "Unused"
         exp = v.get("expires_at", "never")
-        msg += f"**{k}** | Exp: `{exp}` | Status: {status}\n"
-        if len(msg) > 1800: break # Discord limit
+        msg += f"{status_icon} **{k}** | HWID: `{hwid_status}` | Exp: `{exp}`\n"
+        if len(msg) > 1800: break 
     
     await interaction.response.send_message(msg, ephemeral=True)
+
+# --- KOMANDAT E REJA TË SHTUARA (ADMIN ONLY) ---
+
+@bot.tree.command(name="admin_reset_key", description="Reset HWID for a specific key (Admin Only)")
+async def admin_reset_key(interaction: discord.Interaction, key_name: str):
+    if interaction.user.id != OWNER_ID:
+        return await interaction.response.send_message("❌ Access Denied.", ephemeral=True)
+    
+    local_keys = load_keys()
+    if key_name in local_keys:
+        local_keys[key_name]['hwid'] = None
+        save_keys(local_keys)
+        await interaction.response.send_message(f"🔄 HWID reset for key `{key_name}`. User can now link a new PC.", ephemeral=True)
+    else:
+        await interaction.response.send_message("❌ Key not found.", ephemeral=True)
+
+@bot.tree.command(name="admin_manage_key", description="Enable or Disable a key (Admin Only)")
+@app_commands.choices(action=[
+    app_commands.Choice(name="Enable (Open)", value="active"),
+    app_commands.Choice(name="Disable (Close)", value="disabled")
+])
+async def admin_manage_key(interaction: discord.Interaction, key_name: str, action: app_commands.Choice[str]):
+    if interaction.user.id != OWNER_ID:
+        return await interaction.response.send_message("❌ Access Denied.", ephemeral=True)
+    
+    local_keys = load_keys()
+    if key_name in local_keys:
+        local_keys[key_name]['status'] = action.value
+        save_keys(local_keys)
+        status_text = "ENABLED" if action.value == "active" else "DISABLED/CLOSED"
+        await interaction.response.send_message(f"⚙️ Key `{key_name}` is now **{status_text}**.", ephemeral=True)
+    else:
+        await interaction.response.send_message("❌ Key not found.", ephemeral=True)
 
 # ================= EVENTS =================
 
