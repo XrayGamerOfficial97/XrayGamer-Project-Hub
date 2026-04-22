@@ -1,4 +1,3 @@
-ultralytics
 discord.py
 flask
 requests
