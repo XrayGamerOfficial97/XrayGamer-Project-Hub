@@ -1,18 +1,33 @@
+import os
+import sys
+import threading
+import datetime
+import json
+import uuid
+from flask import Flask, request, jsonify
 import discord
 from discord import app_commands
 from discord.ext import commands
-import os
-import json
-import uuid
-import datetime
-from flask import Flask, request, jsonify
-import threading
+from ultralytics import YOLO  # Importi i YOLO
 
-# --- KONFIGURIMI I SISTEMIT ---
-TOKEN = os.environ.get('DISCORD_TOKEN') # Merret nga Environment Variables të Hosting-ut
+# ================= KONFIGURIMI I RRUGËS SË MODELIT =================
+def get_base_path():
+    """Gjen folderin ku ndodhet skedari .exe ose .py"""
+    if getattr(sys, 'frozen', False):
+        # Nëse është duke u ekzekutuar si EXE
+        return os.path.dirname(sys.executable)
+    # Nëse është duke u ekzekutuar si script .py
+    return os.path.dirname(os.path.abspath(__file__))
+
+# Përcaktojmë rrugën e saktë për YOLO para se të nisë çdo gjë tjetër
+BASE_DIR = get_base_path()
+MODEL_PATH = os.path.join(BASE_DIR, "yolov8n.pt")
+
+# --- KONFIGURIMI I SISTEMIT DISCORD & AUTH ---
+TOKEN = os.environ.get('DISCORD_TOKEN') 
 OWNER_ID = 1386797649532948570 
-KEYS_FILE = "keys.json"
-file_lock = threading.Lock() # Parandalon korruptimin e databazës kur ka shumë kërkesa
+KEYS_FILE = os.path.join(BASE_DIR, "keys.json") # Sigurohemi që edhe keys.json të jetë në folderin e duhur
+file_lock = threading.Lock()
 
 class XrayBot(commands.Bot):
     def __init__(self):
@@ -48,7 +63,6 @@ def save_keys(keys):
             json.dump(keys, f, indent=4)
 
 # ================= SERVERI AUTH (FLASK API) =================
-# Ky server shërben për të vërtetuar licencën kur hapet programi .EXE
 app = Flask('')
 
 @app.route('/')
@@ -66,18 +80,15 @@ def check_key():
     keys = load_keys()
     
     if key in keys:
-        # Kontrolli i Statusit (Nëse është i bllokuar nga Admini)
         if keys[key].get("status") == "disabled":
             return jsonify({"status": "error", "message": "License Blocked by Admin!"}), 403
 
-        # 1. Kontrolli i Skadimit (Trial Check)
         expires_at = keys[key].get("expires_at", "never")
         if expires_at != "never":
             expiry_date = datetime.datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S")
             if datetime.datetime.now() > expiry_date:
                 return jsonify({"status": "error", "message": "License Expired!"}), 403
 
-        # 2. Kontrolli i HWID (Hardware Lock)
         if keys[key]['hwid'] is None:
             keys[key]['hwid'] = hwid
             save_keys(keys)
@@ -99,13 +110,10 @@ def run_flask():
 @bot.tree.command(name="getkey", description="Generate your unique 2-hour Trial key")
 async def getkey(interaction: discord.Interaction):
     local_keys = load_keys()
-    
-    # Mbrojtja: Mos lejo të marrin më shumë se 1 çelës për llogari
     for k, v in local_keys.items():
         if v.get("user_id") == interaction.user.id:
             return await interaction.response.send_message(f"⚠️ You already have a key linked to this account: `{k}`", ephemeral=True)
 
-    # Gjenerimi i çelësit Trial (2 orë)
     new_key = f"XRAY-{str(uuid.uuid4())[:8].upper()}"
     expiry_time = (datetime.datetime.now() + datetime.timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -170,8 +178,6 @@ async def admin_keys(interaction: discord.Interaction):
     
     await interaction.response.send_message(msg, ephemeral=True)
 
-# --- KOMANDAT E REJA TË SHTUARA (ADMIN ONLY) ---
-
 @bot.tree.command(name="admin_reset_key", description="Reset HWID for a specific key (Admin Only)")
 async def admin_reset_key(interaction: discord.Interaction, key_name: str):
     if interaction.user.id != OWNER_ID:
@@ -203,6 +209,25 @@ async def admin_manage_key(interaction: discord.Interaction, key_name: str, acti
     else:
         await interaction.response.send_message("❌ Key not found.", ephemeral=True)
 
+# ================= LOGJIKA E LOADING AI ENGINE =================
+
+def initialize_ai():
+    print(f"[20:22:20] Loading AI Engine (YOLOv8)...")
+    try:
+        # Kontrollojmë nëse skedari ekziston lokalisht para se ta thërrasim YOLO
+        if os.path.exists(MODEL_PATH):
+            model = YOLO(MODEL_PATH)
+            print(f"✅ AI Engine Loaded successfully from: {MODEL_PATH}")
+            return model
+        else:
+            # Nëse skedari mungon, kjo do parandalojë gabimin Curl duke dhënë mesazh të qartë
+            print(f"❌ CRITICAL AI ERROR: {MODEL_PATH} not found!")
+            print("Ju lutem vendosni skedarin yolov8n.pt në folderin e programit.")
+            return None
+    except Exception as e:
+        print(f"❌ CRITICAL AI ERROR: {e}")
+        return None
+
 # ================= EVENTS =================
 
 @bot.event
@@ -212,7 +237,14 @@ async def on_ready():
 
 # NISJA E SERVERIT DHE BOTIT
 if __name__ == "__main__":
-    # Nis serverin Auth në një thread tjetër
+    # 1. Nisim AI-in
+    ai_model = initialize_ai()
+    
+    # 2. Nis serverin Auth në një thread tjetër
     threading.Thread(target=run_flask, daemon=True).start()
-    # Nis botin e Discordit
-    bot.run(TOKEN)
+    
+    # 3. Nis botin e Discordit
+    if TOKEN:
+        bot.run(TOKEN)
+    else:
+        print("❌ ERROR: DISCORD_TOKEN missing in environment variables!")
