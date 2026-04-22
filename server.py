@@ -9,10 +9,10 @@ from flask import Flask, request, jsonify
 import threading
 
 # --- KONFIGURIMI I SISTEMIT ---
-TOKEN = os.environ.get('DISCORD_TOKEN') # Merret nga Environment Variables të Hosting-ut
-OWNER_ID = 1386797649532948570 
+TOKEN = os.environ.get('DISCORD_TOKEN')
+OWNER_ID = 1386797649532948570
 KEYS_FILE = "keys.json"
-file_lock = threading.Lock() # Parandalon korruptimin e databazës kur ka shumë kërkesa
+file_lock = threading.Lock()
 
 class XrayBot(commands.Bot):
     def __init__(self):
